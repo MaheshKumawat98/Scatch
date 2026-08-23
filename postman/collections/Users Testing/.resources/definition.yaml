@@ -1,0 +1,4 @@
+$kind: collection
+name: Users Testing
+variables:
+  baseurl: ""
