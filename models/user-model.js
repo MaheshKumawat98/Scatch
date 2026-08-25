@@ -8,7 +8,7 @@ cart: {
     type: Array,
     default:[]
 },
-idadmin:Boolean,
+
 order: {
       type: Array,
     default:[]
