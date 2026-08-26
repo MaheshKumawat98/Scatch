@@ -26,9 +26,17 @@ router.post('/create',async (req,res)=>{
 })
 
 }
-router.post('/create',(req,res)=>{
-    res.send('hey create route is working bro')
+
+router.get('/admin',(req,res)=>{
+    let success=req.flash('success');
+   res.render("createproducts", { success });
 })
+
+router.get("/create", (req, res) => {
+    // Pass the flash message (or an empty array/string if none exists)
+    const success = req.flash("success"); 
+    res.render("createproducts", { success });
+});
 
 
 module.exports=router;

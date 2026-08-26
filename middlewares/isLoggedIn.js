@@ -15,7 +15,7 @@ module.exports=async (req,res,next)=>{
       next();
     }
     catch(err){
-        res.flash('error','somthing went wrong');//flash ka matlab '/'(jaha redirect ho raha) route par ye error dikeha ok 
+        req.flash('error','somthing went wrong');//flash ka matlab '/'(jaha redirect ho raha) route par ye error dikeha ok 
         res.redirect('/');
     }
 }

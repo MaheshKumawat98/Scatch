@@ -1,13 +1,14 @@
 const express=require('express');
 const router=express();
 const userModel=require('../models/user-model');
-const bycrpt=require('bcrypt');
+const bcrypt=require('bcrypt');
 const jwt=require('jsonwebtoken');
 const cookieParser=require('cookie-parser');
 const {generateToken}=require('../util/generateToken');
 router.use(cookieParser());
 const expressSession = require("express-session");
 const flash = require("connect-flash");
+router.use(flash());
 
 router.use(
     expressSession({
@@ -17,16 +18,16 @@ router.use(
     })
 );
 
-router.use(flash());
+
 
 module.exports.registerUser=async (req,res)=>{
     try{
     let{email,password,fullname}=req.body;
     let user=await userModel.findOne({email:email});
     if(user) return res.status(401).send('you have already account ,please login');
-    bycrpt.genSalt(10,(err,salt)=>{
-           bycrpt.hash(password,salt,async (err,hash)=>{
-            if(err) return res.send(err.massage);
+    bcrypt.genSalt(10,(err,salt)=>{
+           bcrypt.hash(password,salt,async (err,hash)=>{
+            if(err) return res.send(err.message);
            let user=await userModel.create({
            email,
            fullname,
@@ -47,13 +48,13 @@ module.exports.registerUser=async (req,res)=>{
 module.exports.loginUser=async (req,res)=>{
     let {email,password}=req.body;
     let user=await userModel.findOne({email:email});
-    if(!user){ res.flash('error','something went wrong')
+    if(!user){ req.flash('error','something went wrong')
                 return  res.redirect('/');}
-    bycrpt.compare(password,user.password,(err,result)=>{
+    bcrypt.compare(password,user.password,(err,result)=>{
         if(result){
           let token=generateToken(user);
           res.cookie('token',token);
-          return res.send('you can longin');
+          return res.redirect('/shop');
         } 
         req.flash('error','something went wrong');
         res.redirect('/');

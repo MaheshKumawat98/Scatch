@@ -1,6 +1,7 @@
 const express=require('express');
 const app=express();
-const bycrpt=require('bcrypt');
+require('dotenv').config(); // matlab ab aap .env file varible use kar sacte ho like example JWT_KEY so how use process.env.JWT_KEY 
+const bcrypt=require('bcrypt');
 const jwt=require('jsonwebtoken');
 const path=require('path');
 const cookieParser=require('cookie-parser');
@@ -15,7 +16,7 @@ const ownersRouter=require('./routes/ownersRouter');
 const productsRouter=require('./routes/productsRouter');
 const index=require('./routes/index');
 
-require('dotenv').config(); // matlab ab aap .env file varible use kar sacte ho like example JWT_KEY so how use process.env.JWT_KEY 
+
 
 app.set('view engine','ejs');
 app.use(express.json());
