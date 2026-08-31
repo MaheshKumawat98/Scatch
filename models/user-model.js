@@ -9,6 +9,11 @@ cart: [{
     ref:'product',
 }],
 
+admin :{
+   type: Boolean,
+   default:false,
+},
+
 order: {
       type: Array,
     default:[]

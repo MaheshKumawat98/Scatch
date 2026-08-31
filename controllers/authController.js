@@ -1,3 +1,5 @@
+const isDev = process.env.NODE_ENV === 'development';
+
 const express=require('express');
 const router=express();
 const userModel=require('../models/user-model');
@@ -20,30 +22,30 @@ router.use(
 
 
 
-module.exports.registerUser=async (req,res)=>{
-    try{
-    let{email,password,fullname}=req.body;
-    let user=await userModel.findOne({email:email});
-    if(user) return res.status(401).send('you have already account ,please login');
-    bcrypt.genSalt(10,(err,salt)=>{
-           bcrypt.hash(password,salt,async (err,hash)=>{
-            if(err) return res.send(err.message);
-           let user=await userModel.create({
-           email,
-           fullname,
-           password:hash,
-    })
-    let token = generateToken(user);
-    res.cookie('token',token);
-    res.send('user created succesfully');
-        })
-    })
-    
+module.exports.registerUser = async (req, res) => {
+    try {
+        let { email, password, fullname, isAdmin } = req.body;
+        let user = await userModel.findOne({ email });
+        if (user) return res.status(401).send('You already have an account');
+
+        bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(password, salt, async (err, hash) => {
+                if (err) return res.send(err.message);
+                let newUser = await userModel.create({
+                    email,
+                    fullname,
+                    password: hash,
+                    admin: isDev && isAdmin === 'on' ? true : false  // dev-only
+                });
+                let token = generateToken(newUser);
+                res.cookie('token', token);
+                res.send('User created successfully');
+            });
+        });
+    } catch (err) {
+        console.log(err.message);
     }
-    catch(err){
-    console.log(err.message);
-    }
-}
+};
 
 module.exports.loginUser=async (req,res)=>{
     let {email,password}=req.body;
