@@ -47,8 +47,7 @@ scatch/
 │   └── isLoggedIn.js           # JWT verification middleware
 ├── models/
 │   ├── user-model.js           # User schema
-│   ├── product-model.js        # Product schema
-│   └── owner-model.js          # Owner/admin schema
+│   └── product-model.js        # Product schema
 ├── routes/
 │   ├── index.js                # Home, shop, cart routes
 │   ├── usersRouter.js          # /users/* routes
@@ -122,7 +121,7 @@ node app.js
   cart: [ObjectId],      // refs → Product
   order: [Array],
   contact: Number,
-  isAdmin: Boolean        // gates access to product management routes
+  role: String            // 'customer' | 'admin'
 }
 ```
 
@@ -139,17 +138,6 @@ node app.js
 }
 ```
 
-**Owner**
-```js
-{
-  fullname: String,
-  email: String,
-  password: String,     // bcrypt hashed
-  product: [Array],
-  gstin: String
-}
-```
-
 ---
 
 ## 🛡️ Access Control
@@ -160,7 +148,7 @@ node app.js
 | `GET /shop` | Logged-in users |
 | `GET /addtocart/:id` | Logged-in users |
 | `GET /cart` | Logged-in users |
-| `POST /products/create` | Owner/Admin only |
+| `POST /owners/products/create` | Owner/Admin only |
 | `GET /owners/admin` | Owner/Admin only |
 | `POST /users/register`, `/login` | Public |
 

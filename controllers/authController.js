@@ -1,69 +1,76 @@
 const isDev = process.env.NODE_ENV === 'development';
+const { validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
+const userModel = require('../models/user-model');
+const { generateToken } = require('../util/generateToken');
+const asyncHandler = require('../utils/asyncHandler');
 
-const express=require('express');
-const router=express();
-const userModel=require('../models/user-model');
-const bcrypt=require('bcrypt');
-const jwt=require('jsonwebtoken');
-const cookieParser=require('cookie-parser');
-const {generateToken}=require('../util/generateToken');
-router.use(cookieParser());
-const expressSession = require("express-session");
-const flash = require("connect-flash");
-router.use(flash());
-
-router.use(
-    expressSession({
-        resave: false,
-        saveUninitialized: false,
-        secret: process.env.EXPRESS_SESSION_SECRET,
-    })
-);
-
-
-
-module.exports.registerUser = async (req, res) => {
-    try {
-        let { email, password, fullname, isAdmin } = req.body;
-        let user = await userModel.findOne({ email });
-        if (user) return res.status(401).send('You already have an account');
-
-        bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(password, salt, async (err, hash) => {
-                if (err) return res.send(err.message);
-                let newUser = await userModel.create({
-                    email,
-                    fullname,
-                    password: hash,
-                    admin: isDev && isAdmin === 'on' ? true : false  // dev-only
-                });
-                let token = generateToken(newUser);
-                res.cookie('token', token);
-                res.send('User created successfully');
-            });
-        });
-    } catch (err) {
-        console.log(err.message);
-    }
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
 };
 
-module.exports.loginUser=async (req,res)=>{
-    let {email,password}=req.body;
-    let user=await userModel.findOne({email:email});
-    if(!user){ req.flash('error','something went wrong')
-                return  res.redirect('/');}
-    bcrypt.compare(password,user.password,(err,result)=>{
-        if(result){
-          let token=generateToken(user);
-          res.cookie('token',token);
-          return res.redirect('/shop');
-        } 
-        req.flash('error','something went wrong');
-        res.redirect('/');
-        
-    })
-}
-module.exports.logout=(req,res)=>{
-    res.cookie('token','');
+// Register user
+module.exports.registerUser = asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map((err) => err.msg).join(', '));
+        return res.redirect('/');
+    }
+
+    const { email, password, fullname, isAdmin } = req.body;
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+        req.flash('error', 'You already have an account');
+        return res.redirect('/');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    const newUser = await userModel.create({
+        email,
+        fullname,
+        password: hash,
+        role: isDev && isAdmin === 'on' ? 'admin' : 'customer',
+    });
+
+    const token = generateToken(newUser);
+    res.cookie('token', token, cookieOptions);
+    req.flash('success', 'User created successfully');
+    res.redirect('/shop');
+});
+
+// Login user
+module.exports.loginUser = asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map((err) => err.msg).join(', '));
+        return res.redirect('/');
+    }
+
+    const { email, password } = req.body;
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+        req.flash('error', 'Invalid email or password');
+        return res.redirect('/');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch) {
+        const token = generateToken(user);
+        res.cookie('token', token, cookieOptions);
+        return res.redirect('/shop');
+    }
+
+    req.flash('error', 'Invalid email or password');
     res.redirect('/');
-}
+});
+
+// Logout user
+module.exports.logout = (req, res) => {
+    res.cookie('token', '', cookieOptions);
+    res.redirect('/');
+};

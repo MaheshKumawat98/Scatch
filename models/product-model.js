@@ -13,8 +13,11 @@ discount: {
 
 bgcolor: String,
 panelcolor: String,
-textcolor: String
-
+textcolor: String,
+isActive: {
+    type: Boolean,
+    default: true,
+},
 })
 
 module.exports= mongoose.model('product',productSchema);

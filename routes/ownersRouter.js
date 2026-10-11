@@ -6,6 +6,13 @@ const productModel = require('../models/product-model');
 const userModel = require('../models/user-model');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../util/generateToken');
+const loginLimiter = require('../middlewares/rateLimiter');
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+};
 
 // ============= OWNER LOGIN ROUTES =============
 
@@ -16,7 +23,7 @@ router.get('/login', (req, res) => {
 });
 
 // Handle owner login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         let { email, password } = req.body;
         let user = await userModel.findOne({ email });
@@ -27,7 +34,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Check if user is an admin
-        if (user.admin !== true) {
+        if (user.role !== 'admin') {
             req.flash('error', 'You are not authorized as admin');
             return res.redirect('/owners/login');
         }
@@ -36,7 +43,7 @@ router.post('/login', async (req, res) => {
         bcrypt.compare(password, user.password, (err, result) => {
             if (result) {
                 let token = generateToken(user);
-                res.cookie('token', token);
+                res.cookie('token', token, cookieOptions);
                 req.flash('success', 'Welcome Admin!');
                 return res.redirect('/owners/admin');
             } else {
@@ -52,8 +59,8 @@ router.post('/login', async (req, res) => {
 });
 
 // ============= OWNER LOGOUT =============
-router.get('/logout', (req, res) => {
-    res.cookie('token', '');
+router.get('/logout', isLoggedIn, isOwner, (req, res) => {
+    res.cookie('token', '', cookieOptions);
     req.flash('success', 'Logged out successfully');
     res.redirect('/');
 });
@@ -62,7 +69,7 @@ router.get('/logout', (req, res) => {
 router.get('/admin', isLoggedIn, isOwner, async (req, res) => {
     try {
         let success = req.flash('success');
-        let products = await productModel.find();
+        let products = await productModel.find({ isActive: { $ne: false } });
         res.render('admin', { success, products, user: req.user });
     } catch (err) {
         console.log(err);
@@ -76,27 +83,6 @@ router.get('/create', isLoggedIn, isOwner, (req, res) => {
     let success = req.flash('success');
     let error = req.flash('error');
     res.render('createproducts', { success, error });
-});
-
-// Handle product creation
-router.post('/create', isLoggedIn, isOwner, async (req, res) => {
-    try {
-        let { name, price, discount, bgcolor, panelcolor, textcolor } = req.body;
-        let product = await productModel.create({
-            name,
-            price,
-            discount: discount || 0,
-            bgcolor,
-            panelcolor,
-            textcolor
-        });
-        req.flash('success', 'Product created successfully!');
-        res.redirect('/owners/admin');
-    } catch (err) {
-        console.log(err);
-        req.flash('error', 'Failed to create product');
-        res.redirect('/owners/create');
-    }
 });
 
 module.exports = router;

@@ -41,6 +41,47 @@
                 </div>
             </div>
 
+        <!-- Recent Orders Section -->
+        <div class="w-full flex flex-col gap-4 px-6 py-6 border-t">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold">Recent Orders</h3>
+                <a href="/orders" class="text-sm font-semibold text-amber-700 hover:underline">
+                    View all orders &rarr;
+                </a>
+            </div>
+
+            <% if (user.orders && user.orders.length > 0) { %>
+                <div class="space-y-3">
+                    <% user.orders.slice(0, 3).forEach(function(order) { %>
+                        <div class="flex items-center justify-between p-4 rounded-md bg-gray-50 border">
+                            <div>
+                                <span class="font-mono text-sm font-bold text-gray-800">#<%= order._id %></span>
+                                <p class="text-xs text-gray-500">
+                                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %> &bull; <%= order.products ? order.products.length : 0 %> items
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-sm font-bold text-gray-900">₹<%= order.totalAmount %></span>
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full capitalize
+                                    <%= order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                       (order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800') %>">
+                                    <%= order.orderStatus %>
+                                </span>
+                                <a href="/orders/<%= order._id %>" class="text-xs font-semibold text-gray-600 hover:text-black">
+                                    Details &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="p-6 text-center text-gray-500 bg-gray-50 rounded-md border">
+                    <p class="text-sm">No orders placed yet.</p>
+                    <a href="/shop" class="text-xs text-amber-700 hover:underline mt-1 inline-block">Start shopping</a>
+                </div>
+            <% } %>
+        </div>
+
         </div>
     </div>
 </div>

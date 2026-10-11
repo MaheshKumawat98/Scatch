@@ -14,7 +14,8 @@ const db=require('./config/mongoose-connection');
 const usersRouter=require('./routes/usersRouter');
 const ownersRouter=require('./routes/ownersRouter');
 const productsRouter=require('./routes/productsRouter');
-const index=require('./routes/index');
+const ordersRouter = require('./routes/orderRouter');
+const index = require('./routes/index');
 
 
 
@@ -32,13 +33,29 @@ app.use(
 )
 app.use(flash());
 
-app.use('/users',usersRouter);
-app.use('/products',productsRouter);
-app.use('/owners',ownersRouter);
-app.use('/',index);
+const errorHandler = require('./middlewares/errorHandler');
 
+app.use('/users', usersRouter);
+app.use('/orders', ordersRouter);
+app.use('/owners/products', productsRouter);
+app.use('/owners', ownersRouter);
+app.use('/', index);
 
-app.listen(3000);
+// 404 Not Found handler
+app.use((req, res, next) => {
+    const err = new Error(`Page not found: ${req.originalUrl}`);
+    err.status = 404;
+    next(err);
+});
 
+// Centralized error-handling middleware
+app.use(errorHandler);
+module.exports = app;
+
+if (require.main === module) {
+    app.listen(3000, () => {
+        console.log('Server listening on port 3000');
+    });
+}
 
 

@@ -5,20 +5,27 @@ fullname: String,
 email: String,
 password: String,
 cart: [{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:'product',
+    product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'product',
+    },
+    quantity: {
+        type: Number,
+        default: 1,
+        min: 1,
+    },
 }],
 
-admin :{
-   type: Boolean,
-   default:false,
+role: {
+    type: String,
+    enum: ['customer', 'admin'],
+    default: 'customer',
 },
 
-order: {
-      type: Array,
-    default:[]
-
-},
+orders: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'order',
+}],
 contact:Number,
 picture: String
 
